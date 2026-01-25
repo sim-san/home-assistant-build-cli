@@ -6,14 +6,18 @@ _Vibe coded, use at own risk._
 
 ## Installation
 
+### From Source
+
 ```bash
-pip install hab
+go install github.com/home-assistant/hab@latest
 ```
 
-Or with uv:
+Or build locally:
 
 ```bash
-uv pip install hab
+git clone https://github.com/home-assistant/hab
+cd hab
+go build -o hab .
 ```
 
 ## Quick Start
@@ -125,14 +129,14 @@ Configuration is stored in `~/.config/home-assistant-builder/`:
 git clone https://github.com/home-assistant/hab
 cd hab
 
-# Install with dev dependencies
-uv sync --dev
+# Build
+go build -o hab .
 
 # Run tests
-pytest
+go test ./...
 
-# Run linting
-ruff check src tests
+# Run integration tests (requires empty-hass)
+./test/run_integration_test.sh
 ```
 
 ## License

@@ -1,0 +1,56 @@
+package cmd
+
+import (
+	"bufio"
+	"fmt"
+	"os"
+	"strings"
+
+	"github.com/home-assistant/hab/auth"
+	"github.com/home-assistant/hab/client"
+	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
+)
+
+var restartForce bool
+
+var systemRestartCmd = &cobra.Command{
+	Use:   "restart",
+	Short: "Restart Home Assistant",
+	Long:  `Restart the Home Assistant core.`,
+	RunE:  runSystemRestart,
+}
+
+func init() {
+	systemCmd.AddCommand(systemRestartCmd)
+	systemRestartCmd.Flags().BoolVarP(&restartForce, "force", "f", false, "Skip confirmation")
+}
+
+func runSystemRestart(cmd *cobra.Command, args []string) error {
+	configDir := viper.GetString("config")
+	textMode := viper.GetBool("text")
+
+	if !restartForce {
+		fmt.Print("This will restart Home Assistant. Continue? [y/N]: ")
+		reader := bufio.NewReader(os.Stdin)
+		response, _ := reader.ReadString('\n')
+		response = strings.ToLower(strings.TrimSpace(response))
+		if response != "y" && response != "yes" {
+			fmt.Println("Cancelled.")
+			return nil
+		}
+	}
+
+	manager := auth.NewManager(configDir)
+	restClient, err := manager.GetRestClient()
+	if err != nil {
+		return err
+	}
+
+	if err := restClient.Restart(); err != nil {
+		return err
+	}
+
+	client.PrintSuccess(nil, textMode, "Restart initiated.")
+	return nil
+}
