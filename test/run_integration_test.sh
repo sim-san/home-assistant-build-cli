@@ -62,9 +62,12 @@ run_hab_optional() {
 wait_for_hass() {
     echo "Waiting for Home Assistant to be ready..."
     for i in {1..60}; do
-        if curl -s -H "Authorization: Bearer $TOKEN" "$URL/api/" > /dev/null 2>&1; then
-            echo "Home Assistant is ready!"
+        STATE=$(curl -s -H "Authorization: Bearer $TOKEN" "$URL/api/config" 2>/dev/null | jq -r '.state // empty')
+        if [ "$STATE" = "RUNNING" ]; then
+            echo "Home Assistant is ready (state: RUNNING)!"
             return 0
+        elif [ -n "$STATE" ]; then
+            echo "Home Assistant state: $STATE (waiting for RUNNING)..."
         fi
         sleep 2
     done
