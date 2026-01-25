@@ -17,9 +17,10 @@ var (
 )
 
 var automationCreateCmd = &cobra.Command{
-	Use:   "create",
+	Use:   "create <id>",
 	Short: "Create a new automation",
-	Long:  `Create a new automation from JSON or YAML.`,
+	Long:  `Create a new automation from JSON or YAML. The ID is used to identify the automation.`,
+	Args:  cobra.ExactArgs(1),
 	RunE:  runAutomationCreate,
 }
 
@@ -31,6 +32,7 @@ func init() {
 }
 
 func runAutomationCreate(cmd *cobra.Command, args []string) error {
+	automationID := args[0]
 	configDir := viper.GetString("config")
 	textMode := viper.GetBool("text")
 
@@ -49,11 +51,11 @@ func runAutomationCreate(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	result, err := restClient.Post("config/automation/config", config)
+	result, err := restClient.Post(fmt.Sprintf("config/automation/config/%s", automationID), config)
 	if err != nil {
 		return err
 	}
 
-	client.PrintSuccess(result, textMode, "Automation created successfully.")
+	client.PrintSuccess(result, textMode, fmt.Sprintf("Automation %s created successfully.", automationID))
 	return nil
 }

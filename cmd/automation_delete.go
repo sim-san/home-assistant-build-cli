@@ -29,9 +29,8 @@ func init() {
 
 func runAutomationDelete(cmd *cobra.Command, args []string) error {
 	automationID := args[0]
-	if !strings.HasPrefix(automationID, "automation.") {
-		automationID = "automation." + automationID
-	}
+	// Strip "automation." prefix if provided - API expects just the ID
+	automationID = strings.TrimPrefix(automationID, "automation.")
 
 	configDir := viper.GetString("config")
 	textMode := viper.GetBool("text")

@@ -17,9 +17,10 @@ var (
 )
 
 var scriptCreateCmd = &cobra.Command{
-	Use:   "create",
+	Use:   "create <id>",
 	Short: "Create a new script",
-	Long:  `Create a new script from JSON or YAML.`,
+	Long:  `Create a new script from JSON or YAML. The ID is used to identify the script.`,
+	Args:  cobra.ExactArgs(1),
 	RunE:  runScriptCreate,
 }
 
@@ -31,6 +32,7 @@ func init() {
 }
 
 func runScriptCreate(cmd *cobra.Command, args []string) error {
+	scriptID := args[0]
 	configDir := viper.GetString("config")
 	textMode := viper.GetBool("text")
 
@@ -49,11 +51,11 @@ func runScriptCreate(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	result, err := restClient.Post("config/script/config", config)
+	result, err := restClient.Post(fmt.Sprintf("config/script/config/%s", scriptID), config)
 	if err != nil {
 		return err
 	}
 
-	client.PrintSuccess(result, textMode, "Script created successfully.")
+	client.PrintSuccess(result, textMode, fmt.Sprintf("Script %s created successfully.", scriptID))
 	return nil
 }
