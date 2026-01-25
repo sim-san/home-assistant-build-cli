@@ -18,7 +18,7 @@ NC='\033[0m' # No Color
 
 # Test token from empty-hass
 TOKEN="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiIyZWZkZGJjZmY0MzQ0NGRlYmUyMDhkNDUyM2RlNTIwMSIsImlhdCI6MTc2OTI4MjkyNiwiZXhwIjoyMDg0NjQyOTI2fQ.ZYSmLdcv5EfGCXrwO2Nd6bxHrxxU-7ieuE0ySwurU9A"
-URL="http://localhost:8123"
+URL="http://localhost:8124"
 
 # Counters
 PASSED=0
@@ -75,7 +75,7 @@ echo "Built: $HAB"
 
 # Start empty-hass
 echo -e "\n${YELLOW}Starting empty-hass...${NC}"
-uvx --from git+https://github.com/balloob/empty-hass empty-hass > /dev/null 2>&1 &
+uvx --from git+https://github.com/balloob/empty-hass empty-hass --port 8124 > /dev/null 2>&1 &
 EMPTY_HASS_PID=$!
 echo "Started empty-hass with PID: $EMPTY_HASS_PID"
 
