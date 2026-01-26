@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/home-assistant/hab/auth"
@@ -66,6 +67,24 @@ func runEntityList(cmd *cobra.Command, args []string) error {
 		if entry, ok := e.(map[string]interface{}); ok {
 			if entityID, ok := entry["entity_id"].(string); ok {
 				registryMap[entityID] = entry
+			}
+		}
+	}
+
+	// Get device registry for device names
+	deviceMap := make(map[string]string) // device_id -> name
+	devices, err := ws.DeviceRegistryList()
+	if err == nil {
+		for _, d := range devices {
+			if device, ok := d.(map[string]interface{}); ok {
+				deviceID, _ := device["id"].(string)
+				name, _ := device["name"].(string)
+				nameByUser, _ := device["name_by_user"].(string)
+				if nameByUser != "" {
+					deviceMap[deviceID] = nameByUser
+				} else if name != "" {
+					deviceMap[deviceID] = name
+				}
 			}
 		}
 	}
@@ -196,7 +215,11 @@ func runEntityList(cmd *cobra.Command, args []string) error {
 
 	// Handle count mode
 	if entityListCount {
-		client.PrintOutput(map[string]interface{}{"count": len(entities)}, textMode, "")
+		if textMode {
+			fmt.Printf("Count: %d\n", len(entities))
+		} else {
+			client.PrintOutput(map[string]interface{}{"count": len(entities)}, false, "")
+		}
 		return nil
 	}
 
@@ -207,17 +230,98 @@ func runEntityList(cmd *cobra.Command, args []string) error {
 
 	// Handle brief mode
 	if entityListBrief {
-		var brief []map[string]interface{}
-		for _, item := range entities {
-			brief = append(brief, map[string]interface{}{
-				"entity_id": item["entity_id"],
-				"name":      item["name"],
-			})
+		if textMode {
+			for _, item := range entities {
+				entityID, _ := item["entity_id"].(string)
+				name, _ := item["name"].(string)
+				if name != "" && name != entityID {
+					fmt.Printf("%s (%s)\n", name, entityID)
+				} else {
+					fmt.Println(entityID)
+				}
+			}
+		} else {
+			var brief []map[string]interface{}
+			for _, item := range entities {
+				brief = append(brief, map[string]interface{}{
+					"entity_id": item["entity_id"],
+					"name":      item["name"],
+				})
+			}
+			client.PrintOutput(brief, false, "")
 		}
-		client.PrintOutput(brief, textMode, "")
 		return nil
 	}
 
-	client.PrintOutput(entities, textMode, "")
+	// Full output
+	if textMode {
+		if len(entities) == 0 {
+			fmt.Println("No entities.")
+			return nil
+		}
+		printEntitiesGroupedByDevice(entities, deviceMap)
+	} else {
+		client.PrintOutput(entities, false, "")
+	}
 	return nil
+}
+
+func printEntitiesGroupedByDevice(entities []map[string]interface{}, deviceNames map[string]string) {
+	// Group by device_id
+	byDevice := make(map[string][]map[string]interface{})
+	var deviceOrder []string
+
+	for _, e := range entities {
+		deviceID, _ := e["device_id"].(string)
+		if _, exists := byDevice[deviceID]; !exists {
+			deviceOrder = append(deviceOrder, deviceID)
+		}
+		byDevice[deviceID] = append(byDevice[deviceID], e)
+	}
+
+	// Print entities without device first
+	if noDevice, ok := byDevice[""]; ok {
+		fmt.Println("No device:")
+		for _, e := range noDevice {
+			printEntityText(e, "  ")
+		}
+		fmt.Println()
+	}
+
+	// Print each device group
+	for _, deviceID := range deviceOrder {
+		if deviceID == "" {
+			continue
+		}
+		deviceEntities := byDevice[deviceID]
+
+		if name, ok := deviceNames[deviceID]; ok && name != "" {
+			fmt.Printf("%s (%s):\n", name, deviceID)
+		} else {
+			fmt.Printf("Device %s:\n", deviceID)
+		}
+		for _, e := range deviceEntities {
+			printEntityText(e, "  ")
+		}
+		fmt.Println()
+	}
+}
+
+func printEntityText(e map[string]interface{}, indent string) {
+	entityID, _ := e["entity_id"].(string)
+	state, _ := e["state"].(string)
+	name, _ := e["name"].(string)
+	areaID, _ := e["area_id"].(string)
+
+	// First line: entity with state
+	if name != "" && name != entityID {
+		fmt.Printf("%s%s (%s): %s\n", indent, name, entityID, state)
+	} else {
+		fmt.Printf("%s%s: %s\n", indent, entityID, state)
+	}
+
+	// Additional details
+	if areaID != "" {
+		fmt.Printf("%s  area: %s\n", indent, areaID)
+	}
 }
