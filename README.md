@@ -9,13 +9,13 @@ _Vibe coded, use at own risk._
 ### From Source
 
 ```bash
-go install github.com/home-assistant/hab@latest
+go install github.com/balloob/home-assistant-build-cli@latest
 ```
 
 Or build locally:
 
 ```bash
-git clone https://github.com/home-assistant/hab
+git clone https://github.com/balloob/home-assistant-build-cli
 cd hab
 go build -o hab .
 ```
@@ -177,7 +177,7 @@ Configuration is stored in `~/.config/home-assistant-builder/`:
 
 ```bash
 # Clone the repository
-git clone https://github.com/home-assistant/hab
+git clone https://github.com/balloob/home-assistant-build-cli
 cd hab
 
 # Build
