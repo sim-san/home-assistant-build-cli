@@ -3,7 +3,7 @@ package main
 import (
 	"os"
 
-	"github.com/home-assistant/hab/cmd"
+	"github.com/sim-san/home-assistant-build-cli/cmd"
 )
 
 // version is set at build time via ldflags
