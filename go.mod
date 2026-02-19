@@ -1,4 +1,5 @@
-module github.com/home-assistant/hab
+module github.com/sim-san/home-assistant-build-cli
+
 
 go 1.22
 
